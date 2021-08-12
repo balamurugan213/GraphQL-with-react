@@ -1,50 +1,41 @@
 const graphql=require("graphql");
 const _ = require('lodash');
-const {GraphQLObjectType,GraphQLString,GraphQLSchema,GraphQLID,GraphQLList}=graphql;
-
-// dummy data
-var books = [
-    { name: 'Name of the Wind', genre: 'Fantasy', id: '1', authorId: '1' },
-    { name: 'The Final Empire', genre: 'Fantasy', id: '2', authorId: '2' },
-    { name: 'The Hero of Ages', genre: 'Fantasy', id: '4', authorId: '2' },
-    { name: 'The Long Earth', genre: 'Sci-Fi', id: '3', authorId: '3' },
-    { name: 'The Colour of Magic', genre: 'Fantasy', id: '5', authorId: '3' },
-    { name: 'The Light Fantastic', genre: 'Fantasy', id: '6', authorId: '3' },
-];
-
-var authors = [
-    { name: 'Patrick Rothfuss', age: 44, id: '1' },
-    { name: 'Brandon Sanderson', age: 42, id: '2' },
-    { name: 'Terry Pratchett', age: 66, id: '3' }
-];
+const User=require('../models/user')
+const Stack=require('../models/stack')
 
 
-const BookType = new GraphQLObjectType({
-    name:'Book',
+
+const {GraphQLObjectType,GraphQLString,GraphQLSchema,GraphQLID,GraphQLList,GraphQLNonNull}=graphql;
+
+
+
+const StackType = new GraphQLObjectType({
+    name:'Stack',
     fields:()=>({
         id:{ type : GraphQLID},
-        name:{ type : GraphQLString},
-        genre:{ type : GraphQLString},
-        author:{
-            type:AuthorType,
+        name:{type:GraphQLString},
+        language:{ type : GraphQLString},
+        userId:{ type : GraphQLString},
+        user:{
+            type:UserType,
             resolve(parent,args){
-                return _.find(authors,{id:parent.id} )
+                return User.findById(parent.userId);
             }
         }
 
     })
 })
 
-const AuthorType=new GraphQLObjectType({
-    name:'Author',
+const UserType=new GraphQLObjectType({
+    name:'Users',
     fields:()=>({
         id:{type:GraphQLID},
         name:{type:GraphQLString}, 
         age:{type:graphql.GraphQLInt},
-        books:{
-            type:new GraphQLList(BookType),
+        stack:{
+            type:new GraphQLList(StackType),
             resolve(parent,args){
-                return _.filter(books,{authorId:parent.id})
+                return Stack.find({userId:parent.id})
             }
         }
     })
@@ -53,38 +44,76 @@ const AuthorType=new GraphQLObjectType({
 const RootQuery=  new GraphQLObjectType({
     name:'RootQueryType',
     fields:{
-        book:{
-            type:BookType,
+        stack:{
+            type:StackType,
             args:{id:{type:GraphQLID}},
             resolve(parent,args){
             //  code the get date from db/ other resources.
-            return _.find(books, { id: args.id });
+            return Stack.findById(args.id)
 
-            // args.id
             }
         },
-        author:{
-            type:AuthorType,
+        user:{
+            type:UserType,
             args:{id:{type:GraphQLID}},
             resolve(parent,args){
-                return _.find(authors,{id:args.id});
+                return User.findById(args.id);
+
             }
         },
-        books:{
-            type:new GraphQLList(BookType),
+        stacks:{
+            type:new GraphQLList(StackType),
             resolve(parent,args){
-                return books
+                return Stack.find();
             }
         },
-        authors:{
-            type:new GraphQLList(AuthorType),
+        users:{
+            type:new GraphQLList(UserType),
             resolve(parent,args){
-                return authors
+                return User.find();
             }
         }
     }
 });
 
+const Mutation=new GraphQLObjectType({
+    name:'Mutation',
+    fields:{
+        addUser:{
+            type: UserType,
+            args:{
+                name:{type:new GraphQLNonNull(GraphQLString)},
+                age:{type:new GraphQLNonNull(graphql.GraphQLInt)}
+            },
+            resolve(parent,args){
+                let user=new User({
+                    name:args.name,
+                    age:args.age
+                });
+                console.log(user)
+                return user.save()
+            }
+        },
+        addStack:{
+            type:StackType,
+            args:{
+                name:{type:new GraphQLNonNull(GraphQLString)},
+                language:{type:new GraphQLNonNull(GraphQLString)},
+                userId:{type:new GraphQLNonNull(GraphQLID)}
+            },
+            resolve(parent,args){
+                let stack=new Stack({
+                    name:args.name,
+                    language:args.language,
+                    userId:args.userId
+                })
+                return stack.save()
+            }
+        }
+    }
+})
+
 module.exports=new GraphQLSchema({
-    query:RootQuery
+    query:RootQuery,
+    mutation:Mutation
 })

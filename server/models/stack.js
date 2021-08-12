@@ -1,0 +1,10 @@
+const mongoose=require('mongoose');
+const Schema=mongoose.Schema;
+
+const stackSchema=Schema({
+    name:String,
+    language:String,
+    userId:String
+})
+
+module.exports=mongoose.model('Stack',stackSchema)
