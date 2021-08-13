@@ -104,4 +104,7 @@ dist
 .tern-port
 
 #Local referance
-.notes.txt
+notes.*
+
+#database credential
+db-credentails.*
