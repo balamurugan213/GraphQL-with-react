@@ -14,6 +14,14 @@ mongoose.set('useCreateIndex', true);
 mongoose.set('useUnifiedTopology', true);
 
 
+
+/*
+The db-credentiles.json file uri with connection credentials
+{
+  uri = "mongodb+srv://<username>:<password>@<projectname>.fphzg.mongodb.net/<myFirstDatabase>?retryWrites=true&w=majority";
+}
+*/
+
 //connect to database
 fs.readFile('db-credentails.json', (err, data) => {
   if (err) throw err;
